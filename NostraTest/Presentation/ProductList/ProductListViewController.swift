@@ -17,7 +17,7 @@ final class ProductListViewController: UIViewController {
 
     private let appBarTitle: UILabel = {
         let label = UILabel()
-        label.text = "Best Furniture"
+        label.text = "Browse all categories"
         label.font = .systemFont(ofSize: 24, weight: .heavy)
         label.textColor = .black
         label.textAlignment = .left
@@ -27,7 +27,7 @@ final class ProductListViewController: UIViewController {
 
     private let appBarSubtitle: UILabel = {
         let label = UILabel()
-        label.text = "Perfect Furniture"
+        label.text = "Find what you're looking for"
         label.font = .systemFont(ofSize: 14, weight: .light)
         label.textColor = AppColors.primaryGray
         label.textAlignment = .left
