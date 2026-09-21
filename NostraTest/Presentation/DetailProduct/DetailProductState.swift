@@ -1,0 +1,15 @@
+//
+//  DetailProductState.swift
+//  NostraTest
+//
+//  Created by Vokal-Ican on 21/09/26.
+//
+
+import Foundation
+
+enum DetailProductState {
+    case loading
+    case loaded(Product)
+    case empty
+    case error(String)
+}
