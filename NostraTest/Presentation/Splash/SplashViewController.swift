@@ -30,7 +30,7 @@ final class SplashViewController: UIViewController {
 
     private let logoLabel: UILabel = {
         let label = UILabel()
-        label.text = "FoodCart"
+        label.text = "e-Catalog"
         label.font = .systemFont(ofSize: 24, weight: .bold)
         label.textColor = AppColors.primaryGreen
         label.textAlignment = .center
@@ -40,7 +40,7 @@ final class SplashViewController: UIViewController {
 
     private let taglineLabel: UILabel = {
         let label = UILabel()
-        label.text = "SPECIAL & DELICIOUS FOOD"
+        label.text = "DISCOVER PRODUCTS YOU'LL LOVE"
         label.font = .systemFont(ofSize: 11, weight: .semibold)
         label.textColor = AppColors.primaryGray
         label.textAlignment = .center
@@ -57,7 +57,7 @@ final class SplashViewController: UIViewController {
 
     private let headlineLine1: UILabel = {
         let label = UILabel()
-        label.text = "Get Fresh Food"
+        label.text = "Find Everything"
         label.font = .systemFont(ofSize: 36, weight: .heavy)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -73,7 +73,7 @@ final class SplashViewController: UIViewController {
 
     private let headlineLine2: UILabel = {
         let label = UILabel()
-        label.text = "Right Now"
+        label.text = "You Need Today"
         label.font = .systemFont(ofSize: 36, weight: .heavy)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -82,7 +82,7 @@ final class SplashViewController: UIViewController {
 
     private let descriptionLabel: UILabel = {
         let label = UILabel()
-        label.text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
+        label.text = "From skincare essentials to home furniture and fragrances. Browse a curated catalog of everyday products, all in one place, updated in real time."
         label.font = .systemFont(ofSize: 14, weight: .regular)
         label.textColor = AppColors.primaryGreen
         label.numberOfLines = 0
