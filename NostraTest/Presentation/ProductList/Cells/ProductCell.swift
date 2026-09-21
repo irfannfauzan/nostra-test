@@ -13,6 +13,10 @@ final class ProductCell: UITableViewCell {
 
     var onFavoriteTapped: (() -> Void)?
 
+    private var imageLoadTask: Task<Void, Never>?
+    
+    private var isFavorite: Bool = false
+
     private let cardContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -26,10 +30,10 @@ final class ProductCell: UITableViewCell {
 
     private let imageProduct: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "hero-previews")
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 12
         imageView.clipsToBounds = true
+        imageView.backgroundColor = .systemGray6
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -39,6 +43,7 @@ final class ProductCell: UITableViewCell {
         label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textColor = .black
         label.textAlignment = .left
+        label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -155,6 +160,8 @@ final class ProductCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         onFavoriteTapped = nil
+        imageLoadTask?.cancel()
+        imageProduct.image = nil
     }
 
     override func setHighlighted(_ highlighted: Bool, animated: Bool) {
@@ -195,6 +202,12 @@ final class ProductCell: UITableViewCell {
     }
 
     @objc private func didTapFavorite() {
+        isFavorite.toggle()
+
+        var config = favoriteButton.configuration
+        config?.image = UIImage(systemName: isFavorite ? "heart.fill" : "heart")
+        favoriteButton.configuration = config
+
         onFavoriteTapped?()
     }
 
@@ -209,12 +222,28 @@ final class ProductCell: UITableViewCell {
             self.favoriteButton.alpha = 1.0
         }
     }
-    
+
     func configure(with product: Product) {
         titleLabel.text = product.title
         sellerLabel.text = product.category.capitalized
         descriptionLabel.text = product.description
         priceLabel.text = String(format: "$%.2f", product.price)
+
+        imageProduct.image = nil
+        loadImage(from: product.thumbnailURL)
     }
-    
+
+    private func loadImage(from url: URL?) {
+        imageLoadTask?.cancel()
+        guard let url else { return }
+
+        imageLoadTask = Task { [weak self] in
+            guard let (data, _) = try? await URLSession.shared.data(from: url),
+                  let image = UIImage(data: data),
+                  !Task.isCancelled else { return }
+            await MainActor.run {
+                self?.imageProduct.image = image
+            }
+        }
+    }
 }
