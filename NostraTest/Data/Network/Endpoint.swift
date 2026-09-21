@@ -9,6 +9,7 @@ import Foundation
 
 enum Endpoint {
     case productList(limit: Int, skip: Int)
+    case productDetail(id: Int)
     
     private static let baseURL = "https://dummyjson.com"
     
@@ -22,6 +23,9 @@ enum Endpoint {
                 URLQueryItem(name: "skip", value: String(skip))
             ]
             return components?.url
+            
+        case.productDetail(let id):
+            return URL(string: "\(Self.baseURL)/products/\(id)")
         }
     }
 }
