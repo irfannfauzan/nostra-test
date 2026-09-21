@@ -112,7 +112,9 @@ extension ProductListViewController: UITableViewDataSource {
 extension ProductListViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-      //navigate to details..
+        let detailView = DetailProductViewController()
+        detailView.hidesBottomBarWhenPushed = true
+        navigationController?.pushViewController(detailView, animated: true)
     }
     
 }
