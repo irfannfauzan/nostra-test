@@ -11,6 +11,14 @@ class DetailProductViewController: UIViewController {
 
     private let viewModel: DetailProductViewModel
 
+    private var imageLoadTask: Task<Void, Never>?
+
+    private var thumbnailImageViews: [UIImageView] = []
+
+    private var selectedThumbnailIndex: Int?
+
+    private var isFavorite: Bool = false
+
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.showsVerticalScrollIndicator = false
@@ -50,6 +58,30 @@ class DetailProductViewController: UIViewController {
         label.textAlignment = .left
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+
+    private let sellerRowSpacer: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return view
+    }()
+
+    private lazy var ratingStackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = 2
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+
+    private lazy var sellerRow: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [sellerLabel, ratingStackView, sellerRowSpacer])
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 8
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
     }()
 
     private let descriptionLabel: UILabel = {
@@ -94,8 +126,6 @@ class DetailProductViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         return stack
     }()
-
-    private let thumbnailImageNames = ["hero-previews", "hero-previews", "hero-previews"]
 
     private let thumbnailsScrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -238,18 +268,19 @@ class DetailProductViewController: UIViewController {
 
         contentView.addSubview(imageProduct)
         contentView.addSubview(titleRow)
-        contentView.addSubview(sellerLabel)
+        contentView.addSubview(sellerRow)
         contentView.addSubview(descriptionLabel)
         contentView.addSubview(thumbnailsScrollView)
         contentView.addSubview(reviewsTitleLabel)
         contentView.addSubview(reviewsScrollView)
 
         thumbnailsScrollView.addSubview(thumbnailsStack)
-        thumbnailImageNames.forEach { name in
-            thumbnailsStack.addArrangedSubview(makeThumbnail(named: name))
-        }
 
         reviewsScrollView.addSubview(reviewsStack)
+
+        favoriteButton.setContentHuggingPriority(.required, for: .horizontal)
+        favoriteButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let safe = view.safeAreaLayoutGuide
 
@@ -273,11 +304,11 @@ class DetailProductViewController: UIViewController {
             titleRow.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             titleRow.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
 
-            sellerLabel.topAnchor.constraint(equalTo: titleRow.bottomAnchor, constant: 4),
-            sellerLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
-            sellerLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
+            sellerRow.topAnchor.constraint(equalTo: titleRow.bottomAnchor, constant: 4),
+            sellerRow.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
+            sellerRow.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
 
-            descriptionLabel.topAnchor.constraint(equalTo: sellerLabel.bottomAnchor, constant: 14),
+            descriptionLabel.topAnchor.constraint(equalTo: sellerRow.bottomAnchor, constant: 14),
             descriptionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             descriptionLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
 
@@ -369,14 +400,56 @@ class DetailProductViewController: UIViewController {
         descriptionLabel.text = product.description
         priceNavbar.text = product.formattedPrice
 
+        ratingStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        makeStars(for: product.rating, size: 18).forEach { ratingStackView.addArrangedSubview($0) }
+
+        loadImage(from: product.thumbnailURL)
+
+        thumbnailsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        thumbnailImageViews = []
+        selectedThumbnailIndex = nil
+
+        product.imageURLs.enumerated().forEach { index, url in
+            let thumbnail = makeThumbnail(from: url, index: index)
+            thumbnailImageViews.append(thumbnail)
+            thumbnailsStack.addArrangedSubview(thumbnail)
+        }
+
+        selectFirstThumbnailIfNeeded()
+
         reviewsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         product.reviews.forEach { review in
             reviewsStack.addArrangedSubview(makeReviewCard(for: review))
         }
     }
 
+    private func loadImage(from url: URL?) {
+        imageLoadTask?.cancel()
+        imageProduct.image = nil
+        guard let url else { return }
+
+        imageLoadTask = Task { [weak self] in
+            guard let (data, _) = try? await URLSession.shared.data(from: url),
+                  let image = UIImage(data: data),
+                  !Task.isCancelled else { return }
+            await MainActor.run {
+                self?.imageProduct.image = image
+            }
+        }
+    }
+
+    private func selectFirstThumbnailIfNeeded() {
+        guard let firstThumbnail = thumbnailImageViews.first else { return }
+        selectedThumbnailIndex = 0
+        firstThumbnail.layer.borderColor = AppColors.primaryGreen.cgColor
+    }
+
     @objc private func didTapFavorite() {
-        print("tap favorite")
+        isFavorite.toggle()
+
+        var config = favoriteButton.configuration
+        config?.image = UIImage(systemName: isFavorite ? "heart.fill" : "heart")
+        favoriteButton.configuration = config
     }
 
     @objc private func favoriteTouchDown() {
@@ -391,15 +464,58 @@ class DetailProductViewController: UIViewController {
         }
     }
 
-    private func makeThumbnail(named imageName: String) -> UIImageView {
+    @objc private func didTapThumbnail(_ sender: UITapGestureRecognizer) {
+        guard let tappedView = sender.view as? UIImageView else { return }
+        let index = tappedView.tag
+
+        selectedThumbnailIndex = index
+        imageProduct.image = tappedView.image
+
+        thumbnailImageViews.forEach { thumbnail in
+            thumbnail.layer.borderColor = thumbnail.tag == index
+                ? AppColors.primaryGreen.cgColor
+                : UIColor.clear.cgColor
+        }
+    }
+
+    private func makeStars(for rating: Double, size: CGFloat) -> [UIImageView] {
+        let starCount = Int(rating.rounded())
+        return (0..<starCount).map { _ in
+            let imageView = UIImageView(image: UIImage(systemName: "star.fill"))
+            imageView.tintColor = .systemYellow
+            imageView.contentMode = .scaleAspectFit
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            imageView.widthAnchor.constraint(equalToConstant: size).isActive = true
+            imageView.heightAnchor.constraint(equalToConstant: size).isActive = true
+            return imageView
+        }
+    }
+
+    private func makeThumbnail(from url: URL, index: Int) -> UIImageView {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: imageName)
         imageView.contentMode = .scaleAspectFill
         imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
+        imageView.backgroundColor = .systemGray6
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.clear.cgColor
+        imageView.isUserInteractionEnabled = true
+        imageView.tag = index
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.widthAnchor.constraint(equalToConstant: 64).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: 64).isActive = true
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapThumbnail(_:)))
+        imageView.addGestureRecognizer(tapGesture)
+
+        Task { [weak imageView] in
+            guard let (data, _) = try? await URLSession.shared.data(from: url),
+                  let image = UIImage(data: data) else { return }
+            await MainActor.run {
+                imageView?.image = image
+            }
+        }
+
         return imageView
     }
 
@@ -423,14 +539,15 @@ class DetailProductViewController: UIViewController {
         commentLabel.numberOfLines = 3
         commentLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let ratingLabel = UILabel()
-        ratingLabel.text = "Rating: \(review.rating)"
-        ratingLabel.font = .systemFont(ofSize: 11, weight: .semibold)
-        ratingLabel.textColor = AppColors.primaryGreen
-        ratingLabel.translatesAutoresizingMaskIntoConstraints = false
+        let reviewStars = makeStars(for: Double(review.rating), size: 12)
+        let ratingRow = UIStackView(arrangedSubviews: reviewStars)
+        ratingRow.axis = .horizontal
+        ratingRow.spacing = 2
+        ratingRow.translatesAutoresizingMaskIntoConstraints = false
 
-        let textStack = UIStackView(arrangedSubviews: [nameLabel, commentLabel, ratingLabel])
+        let textStack = UIStackView(arrangedSubviews: [nameLabel, commentLabel, ratingRow])
         textStack.axis = .vertical
+        textStack.alignment = .leading
         textStack.spacing = 6
         textStack.translatesAutoresizingMaskIntoConstraints = false
 
