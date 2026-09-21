@@ -8,6 +8,8 @@
 import UIKit
 
 final class SplashViewController: UIViewController {
+    
+    private let makeProductListViewController: () -> UIViewController
 
     private let iconContainerView: UIView = {
         let view = UIView()
@@ -98,6 +100,15 @@ final class SplashViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
+    
+    init(makeProductListViewController: @escaping () -> UIViewController) {
+            self.makeProductListViewController = makeProductListViewController
+            super.init(nibName: nil, bundle: nil)
+        }
+
+    required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -174,7 +185,7 @@ final class SplashViewController: UIViewController {
     }
 
     @objc private func didTapOrder() {
-        let productView = ProductListViewController()
+        let productView = makeProductListViewController()
         navigationController?.setViewControllers([productView], animated: true)
     }
 }

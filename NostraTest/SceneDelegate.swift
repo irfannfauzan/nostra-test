@@ -18,11 +18,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        let splashScreen = SplashViewController()
-        let navigationController = UINavigationController(rootViewController: splashScreen)
-        window.rootViewController = navigationController
-        self.window = window
-        window.makeKeyAndVisible()
+        let apiClient = ApiClient()
+           let repository = ProductRepository(apiClient: apiClient)
+           let fetchProductsUseCase = FetchProductUseCase(repository: repository)
+
+           let splashScreen = SplashViewController(
+               makeProductListViewController: {
+                   let viewModel = ProductListViewModel(fetchProductsUseCase: fetchProductsUseCase)
+                   return ProductListViewController(viewModel: viewModel)
+               }
+           )
+
+           let navigationController = UINavigationController(rootViewController: splashScreen)
+           window.rootViewController = navigationController
+           self.window = window
+           window.makeKeyAndVisible()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
