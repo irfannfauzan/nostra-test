@@ -21,13 +21,24 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let apiClient = ApiClient()
            let repository = ProductRepository(apiClient: apiClient)
            let fetchProductsUseCase = FetchProductUseCase(repository: repository)
+           let fetchProductDetailUseCase = FetchProductDetailUseCase(repository: repository)
 
-           let splashScreen = SplashViewController(
-               makeProductListViewController: {
-                   let viewModel = ProductListViewModel(fetchProductsUseCase: fetchProductsUseCase)
-                   return ProductListViewController(viewModel: viewModel)
-               }
-           )
+            let splashScreen = SplashViewController(
+                    makeProductListViewController: {
+                        let viewModel = ProductListViewModel(fetchProductsUseCase: fetchProductsUseCase)
+                        return ProductListViewController(
+                            viewModel: viewModel,
+                            makeDetailViewController: { productId in
+                                let detailViewModel = DetailProductViewModel(
+                                    productId: productId,
+                                    fetchProductDetail: fetchProductDetailUseCase
+                                )
+                                return DetailProductViewController(viewModel: detailViewModel)
+                            }
+                        )
+                    }
+                )
+
 
            let navigationController = UINavigationController(rootViewController: splashScreen)
            window.rootViewController = navigationController

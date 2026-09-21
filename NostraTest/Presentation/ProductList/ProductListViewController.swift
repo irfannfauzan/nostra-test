@@ -12,6 +12,8 @@ final class ProductListViewController: UIViewController {
     private let viewModel: ProductListViewModel
 
     private let tableView = UITableView()
+    
+    private let makeDetailViewController: (Int) -> UIViewController
 
     private let appBarTitle: UILabel = {
         let label = UILabel()
@@ -50,11 +52,12 @@ final class ProductListViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
-
-    init(viewModel: ProductListViewModel) {
-        self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
-    }
+    
+    init(viewModel: ProductListViewModel, makeDetailViewController: @escaping (Int) -> UIViewController) {
+            self.viewModel = viewModel
+            self.makeDetailViewController = makeDetailViewController
+            super.init(nibName: nil, bundle: nil)
+        }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -178,8 +181,8 @@ extension ProductListViewController: UITableViewDataSource {
 extension ProductListViewController: UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let detailView = DetailProductViewController()
-        detailView.hidesBottomBarWhenPushed = true
+        let product = viewModel.products[indexPath.row]
+        let detailView = makeDetailViewController(product.id)
         navigationController?.pushViewController(detailView, animated: true)
     }
 
