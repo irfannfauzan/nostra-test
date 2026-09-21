@@ -15,7 +15,7 @@ final class ApiClient: APIClientProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
     
-    init(session: URLSession, decoder: JSONDecoder) {
+    init(session: URLSession = .shared) {
         self.session = session
         self.decoder = JSONDecoder()
     }
