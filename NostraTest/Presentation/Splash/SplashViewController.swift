@@ -174,7 +174,8 @@ final class SplashViewController: UIViewController {
     }
 
     @objc private func didTapOrder() {
-        //nanti dinavigate ke list..
+        let productView = ProductListViewController()
+        navigationController?.setViewControllers([productView], animated: true)
     }
 }
 
