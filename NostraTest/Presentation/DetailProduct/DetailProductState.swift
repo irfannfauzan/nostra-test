@@ -10,6 +10,5 @@ import Foundation
 enum DetailProductState {
     case loading
     case loaded(Product)
-    case empty
     case error(String)
 }
