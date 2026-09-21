@@ -14,6 +14,8 @@ final class ProductListViewController: UIViewController {
     private let tableView = UITableView()
     
     private let makeDetailViewController: (Int) -> UIViewController
+    
+    private var animatedIndexPaths = Set<IndexPath>()
 
     private let appBarTitle: UILabel = {
         let label = UILabel()
@@ -135,6 +137,7 @@ final class ProductListViewController: UIViewController {
             statusLabel.isHidden = true
             loadingIndicator.startAnimating()
         case .loaded:
+            animatedIndexPaths.removeAll()
             loadingIndicator.stopAnimating()
             statusLabel.isHidden = true
             tableView.isHidden = false
@@ -159,11 +162,10 @@ extension ProductListViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         viewModel.products.count
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: ProductCell.reuseIdentifier,
-            for: indexPath
+            withIdentifier: ProductCell.reuseIdentifier, for: indexPath
         ) as? ProductCell else {
             return UITableViewCell()
         }
@@ -175,6 +177,25 @@ extension ProductListViewController: UITableViewDataSource {
         }
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard !animatedIndexPaths.contains(indexPath) else { return }
+        animatedIndexPaths.insert(indexPath)
+
+        cell.alpha = 0
+        cell.transform = CGAffineTransform(translationX: 0, y: 12)
+
+        UIView.animate(
+            withDuration: 0.35,
+            delay: 0.05 * Double(indexPath.row % 8),
+            options: [.curveEaseOut],
+            animations: {
+                cell.alpha = 1
+                cell.transform = .identity
+            }
+        )
+    }
+
 }
 
 

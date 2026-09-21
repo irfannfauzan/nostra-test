@@ -116,6 +116,10 @@ final class SplashViewController: UIViewController {
         setupHierarchy()
         setupConstraints()
         orderButton.addTarget(self, action: #selector(didTapOrder), for: .touchUpInside)
+        view.alpha = 0
+            UIView.animate(withDuration: 0.5) {
+                self.view.alpha = 1
+            }
     }
 
 

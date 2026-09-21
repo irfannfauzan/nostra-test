@@ -385,6 +385,10 @@ class DetailProductViewController: UIViewController {
             scrollView.isHidden = false
             bottomBarView.isHidden = false
             populate(with: product)
+            scrollView.alpha = 0
+            UIView.animate(withDuration: 0.3) {
+                self.scrollView.alpha = 1
+            }
         case .error(let message):
             loadingIndicator.stopAnimating()
             scrollView.isHidden = true
