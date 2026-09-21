@@ -19,9 +19,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
         let apiClient = ApiClient()
-           let repository = ProductRepository(apiClient: apiClient)
-           let fetchProductsUseCase = FetchProductUseCase(repository: repository)
-           let fetchProductDetailUseCase = FetchProductDetailUseCase(repository: repository)
+        let cache = ProductCache()
+        let repository = ProductRepository(apiClient: apiClient, cache: cache)
+        let fetchProductsUseCase = FetchProductUseCase(repository: repository)
+        let fetchProductDetailUseCase = FetchProductDetailUseCase(repository: repository)
 
             let splashScreen = SplashViewController(
                     makeProductListViewController: {
@@ -38,12 +39,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                         )
                     }
                 )
-
-
-           let navigationController = UINavigationController(rootViewController: splashScreen)
-           window.rootViewController = navigationController
-           self.window = window
-           window.makeKeyAndVisible()
+        
+        let navigationController = UINavigationController(rootViewController: splashScreen)
+        window.rootViewController = navigationController
+        self.window = window
+        window.makeKeyAndVisible()
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
