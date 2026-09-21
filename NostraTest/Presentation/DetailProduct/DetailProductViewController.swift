@@ -9,18 +9,7 @@ import UIKit
 
 class DetailProductViewController: UIViewController {
 
-    private struct Review {
-        let name: String
-        let comment: String
-        let rating: Int
-    }
-
-    private let reviews = [
-        Review(name: "Sarah Malik", comment: "Nyaman banget buat santai sore, worth it banget harganya.", rating: 5),
-        Review(name: "Budi Santoso", comment: "Kualitas bahan oke, tapi pengirimannya agak lama sampainya.", rating: 3),
-        Review(name: "Nadia Putri", comment: "Sesuai sama foto, warnanya cantik dan empuk.", rating: 4),
-        Review(name: "Reza Pratama", comment: "Lumayan buat starter furniture ruang tamu kecil.", rating: 4),
-    ]
+    private let viewModel: DetailProductViewModel
 
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -49,7 +38,7 @@ class DetailProductViewController: UIViewController {
         label.font = .systemFont(ofSize: 22, weight: .bold)
         label.textColor = .black
         label.textAlignment = .left
-        label.text = "Wood Chair"
+        label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -59,7 +48,6 @@ class DetailProductViewController: UIViewController {
         label.font = .systemFont(ofSize: 13, weight: .medium)
         label.textColor = AppColors.primaryGray
         label.textAlignment = .left
-        label.text = "By Salt"
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -70,7 +58,6 @@ class DetailProductViewController: UIViewController {
         label.textColor = AppColors.primaryGray
         label.numberOfLines = 0
         label.textAlignment = .left
-        label.text = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat."
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -150,7 +137,6 @@ class DetailProductViewController: UIViewController {
         return stack
     }()
 
-
     private let bottomBarView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -163,7 +149,6 @@ class DetailProductViewController: UIViewController {
         label.font = .systemFont(ofSize: 24, weight: .bold)
         label.textColor = .black
         label.textAlignment = .left
-        label.text = "$98.00"
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -174,7 +159,7 @@ class DetailProductViewController: UIViewController {
         view.setContentHuggingPriority(.defaultLow, for: .horizontal)
         return view
     }()
-    
+
     private let buttonBuy: UIButton = {
         let button = UIButton(type: .system)
         var config = UIButton.Configuration.filled()
@@ -193,7 +178,7 @@ class DetailProductViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-    
+
     private lazy var stackNavbar: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [priceNavbar, spaceNavbar, buttonBuy])
         stack.axis = .horizontal
@@ -209,8 +194,34 @@ class DetailProductViewController: UIViewController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
-    
+
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
+
+    private let statusLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.textColor = AppColors.primaryGray
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    init(viewModel: DetailProductViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -218,9 +229,11 @@ class DetailProductViewController: UIViewController {
 
         view.addSubview(scrollView)
         view.addSubview(bottomBarView)
+        view.addSubview(loadingIndicator)
+        view.addSubview(statusLabel)
         bottomBarView.addSubview(separatorLine)
         bottomBarView.addSubview(stackNavbar)
-        
+
         scrollView.addSubview(contentView)
 
         contentView.addSubview(imageProduct)
@@ -237,9 +250,6 @@ class DetailProductViewController: UIViewController {
         }
 
         reviewsScrollView.addSubview(reviewsStack)
-        reviews.forEach { review in
-            reviewsStack.addArrangedSubview(makeReviewCard(for: review))
-        }
 
         let safe = view.safeAreaLayoutGuide
 
@@ -299,7 +309,6 @@ class DetailProductViewController: UIViewController {
 
             reviewsScrollView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
 
-            // Container navbar bawah — nempel ke tepi layar (bukan safe area) di kiri/kanan/bawah
             bottomBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bottomBarView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -308,18 +317,68 @@ class DetailProductViewController: UIViewController {
             stackNavbar.leadingAnchor.constraint(equalTo: bottomBarView.leadingAnchor, constant: 24),
             stackNavbar.trailingAnchor.constraint(equalTo: bottomBarView.trailingAnchor, constant: -24),
             stackNavbar.bottomAnchor.constraint(equalTo: safe.bottomAnchor, constant: -24),
-            
+
             separatorLine.topAnchor.constraint(equalTo: bottomBarView.topAnchor),
             separatorLine.leadingAnchor.constraint(equalTo: bottomBarView.leadingAnchor),
             separatorLine.trailingAnchor.constraint(equalTo: bottomBarView.trailingAnchor),
             separatorLine.heightAnchor.constraint(equalToConstant: 1),
+
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+
+            statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
         ])
+
+        bindViewModel()
+        Task { await viewModel.loadDetail() }
+    }
+
+    private func bindViewModel() {
+        viewModel.onStateChange = { [weak self] state in
+            self?.render(state)
+        }
+    }
+
+    private func render(_ state: DetailProductState) {
+        switch state {
+        case .loading:
+            scrollView.isHidden = true
+            bottomBarView.isHidden = true
+            statusLabel.isHidden = true
+            loadingIndicator.startAnimating()
+        case .loaded(let product):
+            loadingIndicator.stopAnimating()
+            statusLabel.isHidden = true
+            scrollView.isHidden = false
+            bottomBarView.isHidden = false
+            populate(with: product)
+        case .error(let message):
+            loadingIndicator.stopAnimating()
+            scrollView.isHidden = true
+            bottomBarView.isHidden = true
+            statusLabel.isHidden = false
+            statusLabel.text = message
+        }
+    }
+
+    private func populate(with product: Product) {
+        titleLabel.text = product.title
+        sellerLabel.text = product.brand ?? product.category.capitalized
+        descriptionLabel.text = product.description
+        priceNavbar.text = product.formattedPrice
+
+        reviewsStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        product.reviews.forEach { review in
+            reviewsStack.addArrangedSubview(makeReviewCard(for: review))
+        }
     }
 
     @objc private func didTapFavorite() {
         print("tap favorite")
     }
-    
+
     @objc private func favoriteTouchDown() {
         UIView.animate(withDuration: 0.1) {
             self.favoriteButton.alpha = 0.5
@@ -344,7 +403,6 @@ class DetailProductViewController: UIViewController {
         return imageView
     }
 
-
     private func makeReviewCard(for review: Review) -> UIView {
         let card = UIView()
         card.backgroundColor = UIColor.systemGray6
@@ -353,7 +411,7 @@ class DetailProductViewController: UIViewController {
         card.widthAnchor.constraint(equalToConstant: 220).isActive = true
 
         let nameLabel = UILabel()
-        nameLabel.text = review.name
+        nameLabel.text = review.reviewerName
         nameLabel.font = .systemFont(ofSize: 13, weight: .bold)
         nameLabel.textColor = .black
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
