@@ -16,19 +16,11 @@ struct ReviewProductDTO: Codable {
 }
 
 extension ReviewProductDTO {
-    func toDomain() -> Review? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-
-        guard let parsedDate = formatter.date(from: date) else {
-            return nil
-        }
-
-        return Review(
+    func toDomain() -> Review {
+        Review(
             rating: rating,
             comment: comment,
-            date: parsedDate,
+            date: date,
             reviewerName: reviewerName,
             reviewerEmail: reviewerEmail
         )

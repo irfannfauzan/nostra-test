@@ -10,7 +10,7 @@ import Foundation
 struct Review: Equatable, Hashable, Codable {
     let rating: Int
     let comment: String
-    let date: Date
+    let date: String
     let reviewerName: String
     let reviewerEmail: String
 }
