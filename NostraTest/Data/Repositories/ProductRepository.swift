@@ -18,4 +18,10 @@ final class ProductRepository: ProductRepositoryProtocol {
         let response: ProductListResponseDTO = try await apiClient.get(.productList(limit: limit, skip: skip))
         return response.products.map { $0.toDomain() }
     }
+    
+    func fetchProductDetail(id: Int) async throws -> Product {
+        let response: ProductDTO = try await apiClient.get(.productDetail(id: id))
+        return response.toDomain()
+    }
+    
 }
