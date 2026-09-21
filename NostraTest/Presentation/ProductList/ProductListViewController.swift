@@ -8,15 +8,8 @@
 import UIKit
 
 final class ProductListViewController: UIViewController {
-    
-    //dummy array of products
-    private let products = [
-        Product(title: "Lounge Sofa 1", category: "beauty", description: "Elegant mid-century modern sofa with plush cushions", price: 245.00),
-        Product(title: "Lounge Sofa 2", category: "beauty", description: "Elegant mid-century modern sofa with plush cushions 3", price: 245.00),
-        Product(title: "Lounge Sofa 4", category: "beauty", description: "Elegant mid-century modern sofa with plush cushions", price: 245.00),
-        Product(title: "Lounge Sofa 5", category: "beauty", description: "Elegant mid-century modern sofa with plush cushions", price: 245.00),
-        Product(title: "Lounge Sofa 6", category: "beauty", description: "Elegant mid-century modern sofa with plush cushions", price: 245.00)
-    ]
+
+    private let viewModel: ProductListViewModel
 
     private let tableView = UITableView()
 
@@ -40,13 +33,42 @@ final class ProductListViewController: UIViewController {
         return label
     }()
 
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
+
+    private let statusLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.textColor = AppColors.primaryGray
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
+    init(viewModel: ProductListViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupAppBar()
         setupTableView()
+        setupStatusViews()
+        bindViewModel()
+        Task { await viewModel.loadProducts() }
     }
-
 
     private func setupAppBar() {
         view.addSubview(appBarTitle)
@@ -82,13 +104,57 @@ final class ProductListViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
     }
+
+    private func setupStatusViews() {
+        view.addSubview(loadingIndicator)
+        view.addSubview(statusLabel)
+
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+
+            statusLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            statusLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
+            statusLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+        ])
+    }
+
+    private func bindViewModel() {
+        viewModel.onStateChange = { [weak self] state in
+            self?.render(state)
+        }
+    }
+
+    private func render(_ state: ProductListState) {
+        switch state {
+        case .loading:
+            tableView.isHidden = true
+            statusLabel.isHidden = true
+            loadingIndicator.startAnimating()
+        case .loaded:
+            loadingIndicator.stopAnimating()
+            statusLabel.isHidden = true
+            tableView.isHidden = false
+            tableView.reloadData()
+        case .empty:
+            loadingIndicator.stopAnimating()
+            tableView.isHidden = true
+            statusLabel.isHidden = false
+            statusLabel.text = "Belum ada produk tersedia."
+        case .error(let message):
+            loadingIndicator.stopAnimating()
+            tableView.isHidden = true
+            statusLabel.isHidden = false
+            statusLabel.text = message
+        }
+    }
 }
 
 
 extension ProductListViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        products.count
+        viewModel.products.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -99,7 +165,7 @@ extension ProductListViewController: UITableViewDataSource {
             return UITableViewCell()
         }
 
-        let product = products[indexPath.row]
+        let product = viewModel.products[indexPath.row]
         cell.configure(with: product)
         cell.onFavoriteTapped = { [weak self] in
             self?.toggleFavorite(for: product)
@@ -110,13 +176,13 @@ extension ProductListViewController: UITableViewDataSource {
 
 
 extension ProductListViewController: UITableViewDelegate {
-    
+
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let detailView = DetailProductViewController()
         detailView.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(detailView, animated: true)
     }
-    
+
 }
 
 
