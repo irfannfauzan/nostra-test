@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 final class SplashViewController: UIViewController {
     
@@ -140,50 +141,60 @@ final class SplashViewController: UIViewController {
 
     private func setupConstraints() {
         let safe = view.safeAreaLayoutGuide
+       
+           iconContainerView.snp.makeConstraints { make in
+               make.top.equalTo(safe).offset(30)
+               make.centerX.equalToSuperview()
+               make.width.height.equalTo(80)
+           }
 
-        NSLayoutConstraint.activate([
-            iconContainerView.topAnchor.constraint(equalTo: safe.topAnchor, constant: 30),
-            iconContainerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            iconContainerView.widthAnchor.constraint(equalToConstant: 80),
-            iconContainerView.heightAnchor.constraint(equalToConstant: 80),
+           iconImageView.snp.makeConstraints { make in
+               make.center.equalToSuperview()
+               make.width.height.equalTo(48)
+           }
 
-            iconImageView.centerXAnchor.constraint(equalTo: iconContainerView.centerXAnchor),
-            iconImageView.centerYAnchor.constraint(equalTo: iconContainerView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 48),
-            iconImageView.heightAnchor.constraint(equalToConstant: 48),
+           logoLabel.snp.makeConstraints { make in
+               make.top.equalTo(iconContainerView.snp.bottom).offset(16)
+               make.centerX.equalToSuperview()
+           }
 
-            logoLabel.topAnchor.constraint(equalTo: iconContainerView.bottomAnchor, constant: 16),
-            logoLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+           taglineLabel.snp.makeConstraints { make in
+               make.top.equalTo(logoLabel.snp.bottom).offset(4)
+               make.centerX.equalToSuperview()
+           }
 
-            taglineLabel.topAnchor.constraint(equalTo: logoLabel.bottomAnchor, constant: 4),
-            taglineLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+           headlineContainer.snp.makeConstraints { make in
+               make.top.equalTo(taglineLabel.snp.bottom).offset(150)
+               make.leading.trailing.equalToSuperview().inset(24)
+           }
 
-            headlineContainer.topAnchor.constraint(equalTo: taglineLabel.bottomAnchor, constant: 150),
-            headlineContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            headlineContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+           headlineLine1.snp.makeConstraints { make in
+               make.top.leading.equalToSuperview()
+           }
 
-            headlineLine1.topAnchor.constraint(equalTo: headlineContainer.topAnchor),
-            headlineLine1.leadingAnchor.constraint(equalTo: headlineContainer.leadingAnchor),
+           headlineLine2.snp.makeConstraints { make in
+               make.top.equalTo(headlineLine1.snp.bottom).offset(2)
+               make.leading.equalToSuperview()
+               make.bottom.equalToSuperview()
+           }
 
-            headlineLine2.topAnchor.constraint(equalTo: headlineLine1.bottomAnchor, constant: 2),
-            headlineLine2.leadingAnchor.constraint(equalTo: headlineContainer.leadingAnchor),
-            headlineLine2.bottomAnchor.constraint(equalTo: headlineContainer.bottomAnchor),
+           highlightBar.snp.makeConstraints { make in
+               make.leading.equalTo(headlineLine2)
+               make.trailing.equalTo(headlineLine2).offset(8)
+               make.bottom.equalTo(headlineLine2).offset(2)
+               make.height.equalTo(20)
+           }
 
-            highlightBar.leadingAnchor.constraint(equalTo: headlineLine2.leadingAnchor),
-            highlightBar.trailingAnchor.constraint(equalTo: headlineLine2.trailingAnchor, constant: 8),
-            highlightBar.bottomAnchor.constraint(equalTo: headlineLine2.bottomAnchor, constant: 2),
-            highlightBar.heightAnchor.constraint(equalToConstant: 20),
+           descriptionLabel.snp.makeConstraints { make in
+               make.top.equalTo(headlineContainer.snp.bottom).offset(20)
+               make.leading.trailing.equalToSuperview().inset(24)
+           }
 
-            descriptionLabel.topAnchor.constraint(equalTo: headlineContainer.bottomAnchor, constant: 20),
-            descriptionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            descriptionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-
-            
-            orderButton.topAnchor.constraint(equalTo: descriptionLabel.bottomAnchor, constant: 30),
-            orderButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            orderButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            orderButton.heightAnchor.constraint(equalToConstant: 52)
-        ])
+           orderButton.snp.makeConstraints { make in
+               make.top.equalTo(descriptionLabel.snp.bottom).offset(30)
+               make.leading.trailing.equalToSuperview().inset(24)
+               make.height.equalTo(52)
+           }
 
         headlineContainer.bringSubviewToFront(headlineLine2)
     }
