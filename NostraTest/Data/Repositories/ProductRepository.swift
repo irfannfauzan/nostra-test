@@ -19,24 +19,23 @@ final class ProductRepository: ProductRepositoryProtocol {
     func fetchProducts(limit: Int, skip: Int) async throws -> [Product] {
         let cacheKey = "products_\(limit)_\(skip)"
 
-        if let cached = cache.getProductList(key: cacheKey) {
-            return cached
+        if let cached = await cache.getProductList(key: cacheKey) {
+                return cached
         }
-
         let response: ProductListResponseDTO = try await apiClient.get(.productList(limit: limit, skip: skip))
         let products = response.products.map { $0.toDomain() }
-        cache.setProductList(products, key: cacheKey)
+        await cache.setProductList(products, key: cacheKey)
         return products
     }
 
     func fetchProductDetail(id: Int) async throws -> Product {
-        if let cached = cache.getProductDetail(id: id) {
+        if let cached = await cache.getProductDetail(id: id) {
             return cached
         }
 
         let response: ProductDTO = try await apiClient.get(.productDetail(id: id))
         let product = response.toDomain()
-        cache.setProductDetail(product)
+        await cache.setProductDetail(product)
         return product
     }
 }
