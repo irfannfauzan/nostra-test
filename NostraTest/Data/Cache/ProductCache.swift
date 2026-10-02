@@ -8,13 +8,13 @@
 import Foundation
 
 protocol ProductCacheProtocol {
-    func getProductList(key: String) -> [Product]?
-    func setProductList(_ products: [Product], key: String)
-    func getProductDetail(id: Int) -> Product?
-    func setProductDetail(_ product: Product)
+    func getProductList(key: String) async -> [Product]?
+    func setProductList(_ products: [Product], key: String) async
+    func getProductDetail(id: Int) async -> Product?
+    func setProductDetail(_ product: Product) async
 }
 
-final class ProductCache: ProductCacheProtocol {
+actor ProductCache: ProductCacheProtocol {
     private struct Entry<T> {
         let value: T
         let storedAt: Date
